@@ -1,23 +1,33 @@
-# LinkSleuth
+# 🔍 LinkSleuth
 
-LinkSleuth is a fast, reliable, and extendable URL discovery and analysis tool written in Go. It allows security researchers and developers to discover endpoints, analyze HTTP responses, and detect sensitive exposure through a modular and multi-threaded approach.
+[![Go Version](https://img.shields.io/github/go-mod/go-version/ismailtsdln/LinkSleuth)](https://go.dev/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Go Report Card](https://goreportcard.com/badge/github.com/ismailtsdln/LinkSleuth)](https://goreportcard.com/report/github.com/ismailtsdln/LinkSleuth)
 
-## Features
+**LinkSleuth** is a high-performance, modular URL discovery and security analysis tool written in Go. Designed for security researchers, bug hunters, and developers, it provides deep insights into web application structures through concurrent crawling, sensitive endpoint detection, and comprehensive reporting.
 
-- **Multi-threaded URL Discovery**: Fast scanning using worker pools.
-- **HTTP Response Analysis**: Automatic categorization of status codes (2xx, 3xx, 4xx, 5xx).
-- **Security Checks**: Detection of sensitive endpoints (admin, login, backup, config).
-- **Flexible Reporting**: Export results to JSON, CSV, and interactive HTML formats.
-- **User-Agent Rotation**: Built-in support for rotating user-agents to avoid rate-limiting.
-- **Modular Architecture**: Easy to extend with custom analyzer or reporter modules.
+---
 
-## Installation
+## 🚀 Key Features
+
+- **⚡ High-Speed Discovery**: Concurrent scanning using optimized worker pools.
+- **🛡️ Security Focused**: Automatic detection of sensitive files (`.env`, `config`, `backup`) and administrative endpoints.
+- **📊 Rich Reporting**: Export results in structured **JSON**, **CSV**, or interactive **HTML** dashboards.
+- **🔁 Built-in Resilience**: Automatic retries with exponential backoff and HTTP 429 (Rate Limit) handling.
+- **🎭 Stealthy Operations**: Random User-Agent rotation to bypass basic WAF and rate-limiting rules.
+- **🧩 Modular Core**: Extensible analyzer and reporter architecture.
+
+---
+
+## 🛠️ Installation
+
+### Using Go Install (Recommended)
 
 ```bash
 go install github.com/ismailtsdln/linksluth@latest
 ```
 
-Or build from source:
+### From Source
 
 ```bash
 git clone https://github.com/ismailtsdln/LinkSleuth.git
@@ -25,42 +35,92 @@ cd LinkSleuth
 go build -o linksluth main.go
 ```
 
-## Usage
+---
 
-### 1. Scan a Target
+## 📖 Usage Guide
 
-Scan a domain using a wordlist and save results to JSON.
+### 1. Basic Scan
 
-```bash
-./linksluth scan -u https://example.com -w wordlist.txt -o results.json
-```
-
-### 2. Analyze Results
-
-Analyze previously saved JSON results in the console.
+Scan a target domain using a wordlist and save results to a JSON file.
 
 ```bash
-./linksluth analyze -i results.json
+./linksluth scan --url https://example.com --wordlist wordlist.txt --output results.json
 ```
 
-### 3. Generate Reports
+### 2. Result Analysis
 
-Generate an interactive HTML report from JSON results.
+Analyze previously generated results directly in your terminal with colored status codes and findings.
 
 ```bash
-./linksluth report -i results.json -o report.html
+./linksluth analyze --input results.json
 ```
 
-## Flags
+### 3. Professional Reporting
 
-- `-u, --url` : Target URL (required for scan)
-- `-w, --wordlist` : Optional directory/file wordlist
-- `-t, --threads` : Concurrent threads (default 10)
-- `-r, --retry` : Retry failed requests (default 2)
-- `-a, --agent` : Custom User-Agent
-- `-o, --output` : Output file path
-- `-v, --verbose` : Verbose logging
+Generate a visual HTML report for stakeholders or documentation.
 
-## License
+```bash
+./linksluth report --input results.json --output report.html
+```
 
-MIT
+---
+
+## ⚙️ Command Line Arguments
+
+| Flag | Short | Description | Default |
+|------|-------|-------------|---------|
+| `--url` | `-u` | Target URL (Scheme required) | - |
+| `--wordlist` | `-w` | Path to directory/file wordlist | - |
+| `--threads` | `-t` | Number of concurrent workers | `10` |
+| `--retry` | `-r` | Number of retries per failed request | `2` |
+| `--agent` | `-a` | Custom User-Agent string | `LinkSleuth/1.0` |
+| `--output` | `-o` | Path to save scan results | - |
+| `--verbose` | `-v` | Enable detailed debug logging | `false` |
+
+---
+
+## 🏗️ Architecture
+
+LinkSleuth is built with a decoupled architecture for maximum flexibility:
+
+1. **Crawler Core**: Handles networking, concurrency, and worker management.
+2. **Analyzer Engine**: Processes HTTP responses and applies security heuristics.
+3. **Reporter Module**: Transforms raw data into human-readable and machine-parsable formats.
+4. **CLI Layer**: Powered by Cobra for a modern and intuitive user experience.
+
+```mermaid
+graph TD
+    CLI[CLI Layer - Cobra] --> Crawler[Crawler Core]
+    Crawler --> HTTP[HTTP Worker Pool]
+    HTTP --> Target[Target Web Application]
+    Target --> HTTP
+    HTTP --> Analyzer[Analyzer Engine]
+    Analyzer --> Reporter[Reporter Module]
+    Reporter --> JSON[JSON Output]
+    Reporter --> CSV[CSV Output]
+    Reporter --> HTML[HTML Dashboard]
+```
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+1. Fork the Project
+2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the Branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+---
+
+## 📄 License
+
+Distributed under the MIT License. See `LICENSE` for more information.
+
+---
+
+<p align="center">
+  Developed with ❤️ by <a href="https://github.com/ismailtsdln">Ismail Tasdelen</a>
+</p>
