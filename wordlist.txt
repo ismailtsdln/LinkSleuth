@@ -1,9 +1,0 @@
-admin
-login
-config
-backup
-.env
-secret
-index.php
-api/v1
-robots.txt
