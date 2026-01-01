@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/ismailtsdln/linksluth/pkg"
+	"github.com/schollz/progressbar/v3"
 )
 
 type Result struct {
@@ -43,6 +44,25 @@ func (c *Crawler) Start() ([]Result, error) {
 	jobs := make(chan string, 100)
 	var wg sync.WaitGroup
 
+	// Prepare path list to know the count for progress bar
+	var paths []string
+	if c.Wordlist != "" {
+		file, err := os.Open(c.Wordlist)
+		if err != nil {
+			return nil, err
+		}
+		defer file.Close()
+
+		scanner := bufio.NewScanner(file)
+		for scanner.Scan() {
+			paths = append(paths, scanner.Text())
+		}
+	} else {
+		paths = append(paths, "")
+	}
+
+	bar := progressbar.Default(int64(len(paths)))
+
 	// Start workers
 	for i := 0; i < c.Threads; i++ {
 		wg.Add(1)
@@ -50,9 +70,9 @@ func (c *Crawler) Start() ([]Result, error) {
 			defer wg.Done()
 			for path := range jobs {
 				fullURL := fmt.Sprintf("%s/%s", c.TargetURL, path)
-				res, err := c.HttpClient.DoRequest(fullURL)
+				res, err := c.HttpClient.DoRequest(fullURL, c.Retries)
+				bar.Add(1)
 				if err != nil {
-					// Handle retries here if needed
 					continue
 				}
 
@@ -71,24 +91,13 @@ func (c *Crawler) Start() ([]Result, error) {
 	}
 
 	// Feed jobs
-	if c.Wordlist != "" {
-		file, err := os.Open(c.Wordlist)
-		if err != nil {
-			return nil, err
-		}
-		defer file.Close()
-
-		scanner := bufio.NewScanner(file)
-		for scanner.Scan() {
-			jobs <- scanner.Text()
-		}
-	} else {
-		// Default simple crawl if no wordlist
-		jobs <- ""
+	for _, p := range paths {
+		jobs <- p
 	}
 
 	close(jobs)
 	wg.Wait()
+	fmt.Println() // Print newline after progress bar ends
 
 	return results, nil
 }

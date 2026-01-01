@@ -1,6 +1,7 @@
 package pkg
 
 import (
+	"fmt"
 	"math/rand"
 	"net/http"
 	"time"
@@ -31,17 +32,39 @@ func (c *Client) GetRandomUserAgent() string {
 	return userAgents[rand.Intn(len(userAgents))]
 }
 
-func (c *Client) DoRequest(url string) (*http.Response, error) {
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		return nil, err
-	}
+func (c *Client) DoRequest(url string, maxRetries int) (*http.Response, error) {
+	var lastErr error
+	for i := 0; i <= maxRetries; i++ {
+		req, err := http.NewRequest("GET", url, nil)
+		if err != nil {
+			return nil, err
+		}
 
-	ua := c.UserAgent
-	if ua == "LinkSleuth/1.0" {
-		ua = c.GetRandomUserAgent()
-	}
-	req.Header.Set("User-Agent", ua)
+		ua := c.UserAgent
+		if ua == "LinkSleuth/1.0" {
+			ua = c.GetRandomUserAgent()
+		}
+		req.Header.Set("User-Agent", ua)
 
-	return c.HttpClient.Do(req)
+		resp, err := c.HttpClient.Do(req)
+		if err == nil {
+			// Check if we should retry on certain status codes like 429 or 5xx
+			if resp.StatusCode == http.StatusTooManyRequests || (resp.StatusCode >= 500 && resp.StatusCode <= 599) {
+				if i < maxRetries {
+					resp.Body.Close()
+					backoff := time.Duration(1<<uint(i)) * time.Second
+					time.Sleep(backoff)
+					continue
+				}
+			}
+			return resp, nil
+		}
+
+		lastErr = err
+		if i < maxRetries {
+			backoff := time.Duration(1<<uint(i)) * time.Second
+			time.Sleep(backoff)
+		}
+	}
+	return nil, fmt.Errorf("after %d retries: %w", maxRetries, lastErr)
 }

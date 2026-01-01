@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/fatih/color"
 	"github.com/ismailtsdln/linksluth/analyzer"
 	"github.com/ismailtsdln/linksluth/crawler"
 	"github.com/spf13/cobra"
@@ -16,26 +17,37 @@ var analyzeCmd = &cobra.Command{
 	Use:   "analyze",
 	Short: "Analyze HTTP responses and detect sensitive endpoints",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Printf("[*] Analyzing results from: %s\n", inputFile)
+		color.Cyan("[*] Analyzing results from: %s", inputFile)
 
 		file, err := os.Open(inputFile)
 		if err != nil {
-			fmt.Printf("[!] Error opening file: %v\n", err)
+			color.Red("[!] Error opening file: %v", err)
 			return
 		}
 		defer file.Close()
 
 		var results []crawler.Result
 		if err := json.NewDecoder(file).Decode(&results); err != nil {
-			fmt.Printf("[!] Error decoding JSON: %v\n", err)
+			color.Red("[!] Error decoding JSON: %v", err)
 			return
 		}
 
 		analysis := analyzer.Analyze(results)
 		for _, res := range analysis {
-			fmt.Printf("[%d] %s - %s\n", res.StatusCode, res.URL, res.Category)
+			statusColor := color.New(color.FgWhite)
+			switch {
+			case res.StatusCode >= 200 && res.StatusCode < 300:
+				statusColor = color.New(color.FgGreen)
+			case res.StatusCode >= 300 && res.StatusCode < 400:
+				statusColor = color.New(color.FgYellow)
+			case res.StatusCode >= 400:
+				statusColor = color.New(color.FgRed)
+			}
+
+			statusColor.Printf("[%d] ", res.StatusCode)
+			fmt.Printf("%s - %s\n", res.URL, res.Category)
 			for _, f := range res.Findings {
-				fmt.Printf("    - %s\n", f)
+				color.Yellow("    - %s", f)
 			}
 		}
 	},

@@ -3,8 +3,10 @@ package reporter
 import (
 	"encoding/csv"
 	"encoding/json"
+	"fmt"
 	"html/template"
 	"os"
+	"strings"
 
 	"github.com/ismailtsdln/linksluth/analyzer"
 )
@@ -12,19 +14,22 @@ import (
 func ExportJSON(results []analyzer.AnalysisResult, filepath string) error {
 	file, err := os.Create(filepath)
 	if err != nil {
-		return err
+		return fmt.Errorf("could not create JSON file: %w", err)
 	}
 	defer file.Close()
 
 	encoder := json.NewEncoder(file)
 	encoder.SetIndent("", "  ")
-	return encoder.Encode(results)
+	if err := encoder.Encode(results); err != nil {
+		return fmt.Errorf("could not encode JSON: %w", err)
+	}
+	return nil
 }
 
 func ExportCSV(results []analyzer.AnalysisResult, filepath string) error {
 	file, err := os.Create(filepath)
 	if err != nil {
-		return err
+		return fmt.Errorf("could not create CSV file: %w", err)
 	}
 	defer file.Close()
 
@@ -32,14 +37,18 @@ func ExportCSV(results []analyzer.AnalysisResult, filepath string) error {
 	defer writer.Flush()
 
 	// Write header
-	writer.Write([]string{"URL", "Status Code", "Category", "Findings"})
+	if err := writer.Write([]string{"URL", "Status Code", "Category", "Findings"}); err != nil {
+		return fmt.Errorf("could not write CSV header: %w", err)
+	}
 
 	for _, res := range results {
 		findings := ""
 		if len(res.Findings) > 0 {
-			findings = "[" + string(res.Findings[0]) + "...]" // Simplified for CSV
+			findings = strings.Join(res.Findings, "; ")
 		}
-		writer.Write([]string{res.URL, string(rune(res.StatusCode)), res.Category, findings})
+		if err := writer.Write([]string{res.URL, fmt.Sprintf("%d", res.StatusCode), res.Category, findings}); err != nil {
+			return fmt.Errorf("could not write CSV record: %w", err)
+		}
 	}
 
 	return nil
