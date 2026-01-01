@@ -1,0 +1,70 @@
+[
+  {
+    "url": "https://google.com/login",
+    "status_code": 404,
+    "category": "client error (4xx)",
+    "findings": [
+      "Sensitive keyword detected: login"
+    ]
+  },
+  {
+    "url": "https://google.com/api/v1",
+    "status_code": 404,
+    "category": "client error (4xx)",
+    "findings": []
+  },
+  {
+    "url": "https://google.com/index.php",
+    "status_code": 404,
+    "category": "client error (4xx)",
+    "findings": []
+  },
+  {
+    "url": "https://google.com/config",
+    "status_code": 404,
+    "category": "client error (4xx)",
+    "findings": [
+      "Sensitive keyword detected: config",
+      "Potential configuration file exposure"
+    ]
+  },
+  {
+    "url": "https://google.com/.env",
+    "status_code": 404,
+    "category": "client error (4xx)",
+    "findings": [
+      "Sensitive keyword detected: config",
+      "Potential configuration file exposure"
+    ]
+  },
+  {
+    "url": "https://google.com/backup",
+    "status_code": 404,
+    "category": "client error (4xx)",
+    "findings": [
+      "Sensitive keyword detected: backup"
+    ]
+  },
+  {
+    "url": "https://google.com/secret",
+    "status_code": 404,
+    "category": "client error (4xx)",
+    "findings": [
+      "Sensitive keyword detected: private"
+    ]
+  },
+  {
+    "url": "https://google.com/admin",
+    "status_code": 404,
+    "category": "client error (4xx)",
+    "findings": [
+      "Sensitive keyword detected: admin"
+    ]
+  },
+  {
+    "url": "https://google.com/robots.txt",
+    "status_code": 200,
+    "category": "valid (2xx)",
+    "findings": []
+  }
+]
