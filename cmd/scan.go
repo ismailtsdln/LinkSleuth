@@ -2,7 +2,10 @@ package cmd
 
 import (
 	"fmt"
+	"net/url"
+	"strings"
 
+	"github.com/fatih/color"
 	"github.com/ismailtsdln/linksluth/analyzer"
 	"github.com/ismailtsdln/linksluth/crawler"
 	"github.com/ismailtsdln/linksluth/reporter"
@@ -22,31 +25,50 @@ var scanCmd = &cobra.Command{
 	Use:   "scan",
 	Short: "Scan target domains for URLs",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Printf("[*] Starting scan on: %s\n", targetURL)
+		// URL Validation
+		u, err := url.ParseRequestURI(targetURL)
+		if err != nil || u.Scheme == "" || u.Host == "" {
+			color.Red("[!] Invalid target URL: %s. Use format http://example.com", targetURL)
+			return
+		}
+		targetURL = strings.TrimSuffix(targetURL, "/")
+
+		color.Cyan("[*] Starting scan on: %s", targetURL)
 
 		c := crawler.NewCrawler(targetURL, wordlist, threads, retries, userAgent)
 		results, err := c.Start()
 		if err != nil {
-			fmt.Printf("[!] Error during crawling: %v\n", err)
+			color.Red("[!] Error during crawling: %v", err)
 			return
 		}
 
-		fmt.Printf("[*] Discovered %d URLs. Analyzing...\n", len(results))
+		color.Green("[+] Discovered %d URLs. Analyzing...", len(results))
 		analysis := analyzer.Analyze(results)
 
 		if outputPath != "" {
 			err := reporter.ExportJSON(analysis, outputPath)
 			if err != nil {
-				fmt.Printf("[!] Error exporting results: %v\n", err)
+				color.Red("[!] Error exporting results: %v", err)
 			} else {
-				fmt.Printf("[+] Results saved to %s\n", outputPath)
+				color.Green("[+] Results saved to %s", outputPath)
 			}
 		} else {
 			// Print summary to console
 			for _, res := range analysis {
-				fmt.Printf("[%d] %s - %s\n", res.StatusCode, res.URL, res.Category)
+				statusColor := color.New(color.FgWhite)
+				switch {
+				case res.StatusCode >= 200 && res.StatusCode < 300:
+					statusColor = color.New(color.FgGreen)
+				case res.StatusCode >= 300 && res.StatusCode < 400:
+					statusColor = color.New(color.FgYellow)
+				case res.StatusCode >= 400:
+					statusColor = color.New(color.FgRed)
+				}
+
+				statusColor.Printf("[%d] ", res.StatusCode)
+				fmt.Printf("%s - %s\n", res.URL, res.Category)
 				for _, f := range res.Findings {
-					fmt.Printf("    - %s\n", f)
+					color.Yellow("    - %s", f)
 				}
 			}
 		}
